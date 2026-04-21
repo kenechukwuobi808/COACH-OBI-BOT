@@ -1,15 +1,35 @@
 const { default: makeWASocket, useMultiFileAuthState } = require("@whiskeysockets/baileys");
 const qrcode = require("qrcode-terminal");
+const express = require("express");
+
+const app = express();
+const PORT = process.env.PORT || 3000;
+
+// Keep Render alive
+app.get("/", (req, res) => {
+  res.send("COACH OBI BOT is running 🚀");
+});
+
+app.listen(PORT, () => {
+  console.log("Server running on port " + PORT);
+});
 
 async function startBot() {
   const { state, saveCreds } = await useMultiFileAuthState("auth");
 
-  const sock = makeWASocket({ auth: state });
+  const sock = makeWASocket({
+    auth: state
+  });
 
-  sock.ev.on("connection.update", ({ qr }) => {
+  sock.ev.on("connection.update", ({ qr, connection }) => {
     if (qr) {
       qrcode.generate(qr, { small: true });
       console.log("Scan QR to connect COACH OBI BOT");
+    }
+
+    if (connection === "close") {
+      console.log("Reconnecting...");
+      startBot();
     }
   });
 
